@@ -61,7 +61,11 @@ func keys(m map[string]latency) []string {
 func printTopN(dimension string, n int, m map[string]latency) {
 	ks := keys(m)
 	sort.Slice(ks, func(i, j int) bool {
-		return m[ks[i]].average() > m[ks[j]].average()
+		lhs, rhs := m[ks[i]].average(), m[ks[j]].average()
+		if lhs == rhs {
+			return ks[i] > ks[j]
+		}
+		return lhs > rhs
 	})
 
 	if n > len(ks) {
@@ -76,9 +80,6 @@ func printTopN(dimension string, n int, m map[string]latency) {
 
 func main() {
 	dec := json.NewDecoder(os.Stdin)
-	enc := json.NewEncoder(os.Stdout)
-
-	enc.SetIndent("", "  ")
 
 	byAddr := make(map[string]latency)
 	byProvider := make(map[string]latency)
