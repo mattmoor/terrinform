@@ -37,7 +37,7 @@ type latency struct {
 func (l *latency) add(sec int) {
 	l.TotalTimeSeconds += sec
 	l.Instances++
-	if sec < l.MinTimeSeconds || l.MinTimeSeconds == 0 {
+	if sec < l.MinTimeSeconds || l.Instances == 1 {
 		l.MinTimeSeconds = sec
 	}
 	if sec > l.MaxTimeSeconds {
@@ -72,9 +72,18 @@ func printTopN(dimension string, n int, m map[string]latency) {
 		n = len(ks)
 	}
 
-	fmt.Printf("Top %d by %s:\n", n, dimension)
+	total := 0
+	for _, key := range ks {
+		total += m[key].TotalTimeSeconds
+	}
+
+	fmt.Printf("Top %d by %s (total: %d sec):\n", n, dimension, total)
 	for _, key := range ks[:n] {
-		fmt.Printf("  %s: %.2f sec [%d, %d]\n", key, m[key].average(), m[key].MinTimeSeconds, m[key].MaxTimeSeconds)
+		if m[key].Instances == 1 {
+			fmt.Printf("  %s: %d sec (%.2f%%)\n", key, m[key].TotalTimeSeconds, float64(m[key].TotalTimeSeconds*100)/float64(total))
+		} else {
+			fmt.Printf("  %s: total %d sec (%.2f%%) over %d instances, avg: %.2f sec [%d, %d]\n", key, m[key].TotalTimeSeconds, float64(m[key].TotalTimeSeconds*100)/float64(total), m[key].Instances, m[key].average(), m[key].MinTimeSeconds, m[key].MaxTimeSeconds)
+		}
 	}
 }
 
